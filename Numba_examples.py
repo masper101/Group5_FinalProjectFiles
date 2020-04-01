@@ -1,6 +1,9 @@
+from numba import njit
 from numba import jit
 import numpy as np
 import time
+import timeit
+import matplotlib.pyplot as plt
 
 """
 Example 1: Simple performance test
@@ -8,10 +11,10 @@ Example 1: Simple performance test
 Obtained directly from https://numba.pydata.org/numba-examples/
 
 """
-
+print('===Example 1====\nSimple compilation test\n')
 x = np.arange(100).reshape(10, 10)
 
-@jit(nopython=True)
+@njit
 def go_fast(a): # Function is compiled and runs in machine code
     trace = 0
     for i in range(a.shape[0]):
@@ -35,61 +38,81 @@ Example 2: Corona Virus Simulation
 
 This example models the time it takes for the corona virus to affect 100% of a population of 
 1 Million people based on various behavioral rules. 
-Documentation: see https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3372334/
-
-Techniques include:
-1) Control, no changes in behaviors and habits of a population
-2) Moderate, social distancing rules enacted
-3) Significant, "shelter in place" policies passed
+Data obtained from: https://ourworldindata.org/coronavirus#our-data-sources
 
 """
+print('\n\n===Example 2====\nCorona-19 Simulation\n')
 
 pop = 1e6
 
-@jit
-def infect_time(connections):
-    # this function calculates the time it takes to infect a population of ppl with
-    # no behavioral control measures in place
-
-    infected = {'child': 0, 'adult': 1, 'senior': 0}  # an adult is most likely to be infected first
-    total = [np.sum([num for num in infected.values()])]
-
-    #loop everyday until 100% infected
-    day = 0
-    while total[-1] <= pop:
-        infected_1 = infected.copy()
-        for key in infected_1:
-            new_infected = np.multiply(infected[key], connections[key])
-            infected['child'] += new_infected[0]
-            infected['adult'] += new_infected[1]
-            infected['senior'] += new_infected[2]
-        total.append(np.sum([num for num in infected.values()]))
+def infect_time_control(infected, day2double):
+    day = 1
+    while infected < pop:
+        infected = np.multiply(infected, np.power(2, np.divide(day, day2double)))
         day += 1
-    return day, total
+    return day
 
-# Connections that a person will have each day [child, adult, senior]
-control = {'child': [36, 9, 2], 'adult': [4, 16, 2], 'senior': [3, 7, 9]}
-moderate = {'child': [8, 9, 2], 'adult': [4, 10, 2], 'senior': [3, 7, 5]}
-significant = {'child': [0, 2, 0], 'adult': [1, 1, 0], 'senior': [0, 0, 1]}
+@njit
+def infect_time_numba(infected, day2double):
+    day = 1
+    while infected < pop:
+        infected = np.multiply(infected, np.power(2, np.divide(day, day2double)))
+        day += 1
+    return day
 
-# Compilation time
-start1 = time.time()
-[control_days, control_totals] = infect_time(control)
-[moderate_days, moderate_totals] = infect_time(moderate)
-[significant_days, significant_totals] = infect_time(significant)
-end1 = time.time()
-print('It takes %d days with NO regulations to infect 1 million people.' % control_days)
-print('It takes %d days with moderate regulations to infect 1 million people.' % moderate_days)
-print('It takes %d days with significant regulations to infect 1 million people.' % significant_days)
-print("Elapsed (with compilation) = %s" % (end1 - start1))
+# Some Real-World Examples
+people_infected = 1  # initial number of people infected
+world_rate = 7  # rate for doubling in the world
+us_rate = 5  # rate for doubling in the us
+southKorea_rate = 28 # rate for doubling in South Korea
 
-# Executing from cache
-start2 = time.time()
-[control_days, control_totals] = infect_time(control)
-[moderate_days, moderate_totals] = infect_time(moderate)
-[significant_days, significant_totals] = infect_time(significant)
-end2 = time.time()
-print('It takes %d days with NO regulations to infect 1 million people.' % control_days)
-print('It takes %d days with moderate regulations to infect 1 million people.' % moderate_days)
-print('It takes %d days with significant regulations to infect 1 million people.' % significant_days)
-print("Elapsed (after compilation) = %s" % (end2 - start2))
+days_world = infect_time_numba(people_infected, world_rate)
+days_us = infect_time_numba(people_infected, us_rate)
+days_southKorea = infect_time_numba(people_infected, southKorea_rate)
+
+print("It will take %d days to infect %d people in the World" % (days_world, pop))
+print("It will take %d days to infect %d people in the U.S." % (days_us, pop))
+print("It will take %d days to infect %d people in South Korea" % (days_southKorea, pop))
+
+time_control = []
+time_numba = []
+rates = np.arange(1, 1001)
+days_control = []
+days_numba = []
+
+for rate in rates:
+    # Control
+    start = time.time()
+    days_control.append(infect_time_control(1, rate))
+    end = time.time()
+    time_control.append(end - start)
+
+    # Numba
+    start = time.time()
+    days_numba.append(infect_time_numba(1, rate))
+    end = time.time()
+    time_numba.append(end - start)
+
+fig, ax = plt.subplots()
+fig.set_tight_layout(True)
+
+ax.scatter(rates[1:],time_control[1:], linewidths=0.01, marker='.')
+ax.scatter(rates[1:],time_numba[1:], linewidths=0.01, marker='.')
+ax.set_xlabel('Rate [days to double]')
+ax.set_ylabel('Time to execute [s]')
+ax.legend(['Control', 'Numba'])
+ax.set_title('Performance Comparison')
+
+fig.show()
+fig.savefig('Performance Comparison.png')
+
+fig2, ax2 = plt.subplots()
+fig2.set_tight_layout(True)
+
+ax2.scatter(rates,days_numba, linewidths=0.01, marker='.')
+ax2.set_xlabel('Rate [days to double]')
+ax2.set_ylabel('Days to 1 million infected')
+ax2.set_title('Time to Infect 1m People vs Doubling Rate')
+
+fig2.show()
+fig2.savefig('Infected Time.png')
