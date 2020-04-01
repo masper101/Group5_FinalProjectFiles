@@ -2,7 +2,6 @@ from numba import njit
 from numba import jit
 import numpy as np
 import time
-import timeit
 import matplotlib.pyplot as plt
 
 """
