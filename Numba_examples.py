@@ -100,6 +100,7 @@ ax.set_xlabel('Rate [days to double]')
 ax.set_ylabel('Time to execute [s]')
 ax.legend(['Control', 'Numba'])
 ax.set_title('Performance Comparison')
+ax.set_ylim(0)
 
 fig.show()
 fig.savefig('Performance Comparison.png')
