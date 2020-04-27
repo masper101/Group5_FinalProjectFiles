@@ -6,6 +6,9 @@ Created on Thu Apr 23 12:43:29 2020
 from numpy import cos, sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import math
+import time
 
 #creates three joint arm
 class ThreeLinkArm():
@@ -55,14 +58,31 @@ class ThreeLinkArm():
         plt.plot([self.elbow[0], self.wrist[0]],
                  [self.elbow[1], self.wrist[1]],
                  'r-')
-        plt.plot([self.wrist[0], self.finger[0]], 
+        plt.plot([self.wrist[0], self.finger[0]],
                  [self.wrist[1], self.finger[1]],
                  'r-')
-        
+
         plt.plot(self.shoulder[0], self.shoulder[1], 'ko')
         plt.plot(self.elbow[0], self.elbow[1], 'ko')
         plt.plot(self.wrist[0], self.wrist[1], 'ko')
         plt.plot(self.finger[0], self.finger[1], 'ko')
+
+    def axplot(self):
+        def plot(self):
+            ax.plot([self.shoulder[0], self.elbow[0], ],
+                     [self.shoulder[1], self.elbow[1]],
+                     'r-')
+            ax.plot([self.elbow[0], self.wrist[0]],
+                     [self.elbow[1], self.wrist[1]],
+                     'r-')
+            ax.plot([self.wrist[0], self.finger[0]],
+                     [self.wrist[1], self.finger[1]],
+                     'r-')
+
+            ax.plot(self.shoulder[0], self.shoulder[1], 'ko')
+            ax.plot(self.elbow[0], self.elbow[1], 'ko')
+            ax.plot(self.wrist[0], self.wrist[1], 'ko')
+            ax.plot(self.finger[0], self.finger[1], 'ko')
 
 '''functions to help draw the angles
 did not modify these in any way'''
@@ -102,23 +122,69 @@ class insertObject:
         plt.plot(self.x0, self.y0, 'b*', lw=2.0)
         plt.annotate('Object', (self.x0+.1, self.y0))
 
+''' Function to create the animation '''
+def update(i):
+    label = 'timestep {0}, {1} ms'.format(i,(i*dt))
+    # Update the arm to the new orientation with angle changes
+    max_dtheta = np.multiply(dt*10**-3,w)  # maximum angle joint can move within a timestep
+    if i == 0:
+        dtheta = np.subtract(final_angles, initial_angles)
+    else:
+        dtheta = np.subtract(final_angles, arm.joint_angles)
+    dir = []
+    for a in dtheta:
+        if a > 0: dir.append(1)
+        elif a == 0: dir.append(0)
+        elif a < 0: dir.append(-1)
+
+    new_theta = []
+
+    for a in range(len(dtheta)):
+        if i > 0:
+            if max_dtheta[a] <= abs(dtheta[a]):
+                new_theta.append(arm.joint_angles[a] + max_dtheta[a]*dir[a])
+            elif max_dtheta[a] > abs(dtheta[a]):
+                new_theta.append(arm.joint_angles[a] + dtheta[a])
+        else:
+            if max_dtheta[a] <= abs(dtheta[a]):
+                new_theta.append(initial_angles[a] + max_dtheta[a]*dir[a])
+            elif max_dtheta[a] > abs(dtheta[a]):
+                new_theta.append(initial_angles[a] + dtheta[a])
+    i += 1
+    arm.update_joints(new_theta)
+    ax.set_xlabel(label)
+    return arm.plot()
+
 '''create arm and object '''
 arm = ThreeLinkArm()
 objPos = (1.5, 1.5)
 obj = insertObject(xpos=objPos[0],ypos=objPos[1])
 
-theta0 = 0.5
-theta1 = 1
-theta2 = 1
+initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
+w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
 phi = 0  # end effector orientation (must be solve for)
 tol = 1e-3  # tolerance btw arm's finger and object
+
+#Inital orientation
+arm.update_joints(initial_angles)
+fig, ax = plt.subplots()  # initialize plot
+fig.set_tight_layout(True)
+arm.plot()  # plot the first orientation
 
 obj.plotObj()
 arm.inverse_kinematics(objPos[0], objPos[1], phi)
 while np.linalg.norm(arm.finger - np.array(objPos)) >= tol:
     phi += 0.001
     arm.inverse_kinematics(objPos[0], objPos[1], phi)
-arm.plot()
+
+# Create animation of arm moving to final location
+dt = 100
+final_angles = arm.joint_angles
+steps = np.divide(np.subtract(final_angles,initial_angles),w*dt*10**-3)
+anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(max(abs(steps)))), interval=dt)
+
+# save a gif of the animation using the writing package from magick
+anim.save('arm_test1.gif', dpi=80, writer='imagemagick')
 
 # arm.update_joints([theta0, theta1, theta2])  # test configuraton
 # arm.plot()  # test plot
@@ -156,21 +222,6 @@ arm.plot()
 #     arrowprops=dict(facecolor='black', shrink=0.05))
 
 
-plt.axis("equal")
+# plt.axis("equal")
 
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# plt.show()
