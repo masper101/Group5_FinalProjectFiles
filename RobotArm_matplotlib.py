@@ -3,10 +3,9 @@ Created on Thu Apr 23 12:43:29 2020
 
 @author: Emily Brady
 """
-from math import cos, sin, sqrt
+from numpy import cos, sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 
 #creates three joint arm
 class ThreeLinkArm():
@@ -14,7 +13,7 @@ class ThreeLinkArm():
         self.shoulder = np.array([0, 0])
         self.link_lengths = [1, 1, 1]
         self.update_joints(joint_angles)
-        self.phi = math.pi/4
+        self.phi = np.pi/4
 
     def update_joints(self, joint_angles):
         self.joint_angles = joint_angles
@@ -33,16 +32,16 @@ class ThreeLinkArm():
 
     def inverse_kinematics(self, xf, yf, phi):
         self.phi = phi
-        self.xp = xf - self.link_lengths[2]*cos(self.phi)
-        self.yp = yf - self.link_lengths[2]*sin(self.phi)
+        self.xp = xf - self.link_lengths[2]*np.cos(self.phi)
+        self.yp = yf - self.link_lengths[2]*np.sin(self.phi)
 
-        gamma = math.atan2(-self.yp/sqrt(self.xp**2 + self.yp**2), self.xp/sqrt(self.xp**2 + self.yp**2))
+        gamma = np.arctan2(-self.yp/sqrt(self.xp**2 + self.yp**2), self.xp/sqrt(self.xp**2 + self.yp**2))
         sigma = 1
 
-        theta0 = gamma + sigma*math.acos(-(self.xp**2 + self.yp**2 + self.link_lengths[0]**2 - self.link_lengths[1]**2)
+        theta0 = gamma + sigma*np.arccos(-(self.xp**2 + self.yp**2 + self.link_lengths[0]**2 - self.link_lengths[1]**2)
                                          / (2*self.link_lengths[0]*sqrt(self.xp**2 + self.yp**2)))
 
-        theta1 = math.atan2((self.yp - self.link_lengths[0]*sin(theta0))/self.link_lengths[1],
+        theta1 = np.arctan2((self.yp - self.link_lengths[0]*sin(theta0))/self.link_lengths[1],
                             (self.xp - self.link_lengths[0]*cos(theta0))/self.link_lengths[1]) - theta0
 
         theta2 = self.phi - theta0 - theta1
