@@ -140,7 +140,9 @@ class drawPlatforms:
 ''' Function to create the animation '''
 def update(i):
     #start with cleared figure!
-    plt.clf()
+    plt.cla()
+    ax.set_xlim(0,3)
+    ax.set_ylim(0,3)
     label = 'timestep {0}, {1} ms'.format(i,(i*dt))
     
     global made2Object
@@ -218,9 +220,7 @@ tol = 1e-3  # tolerance btw arm's finger and object
 #Initial orientation
 arm.update_joints(initial_angles)
 fig, ax = plt.subplots()  # initialize plot
-fig.set_tight_layout(True)
-ax.set_xlim(0,3)
-ax.set_ylim(0,3)
+# fig.set_tight_layout(True)
 arm.plot()  # plot the first orientation
 
 obj.plotObj()
