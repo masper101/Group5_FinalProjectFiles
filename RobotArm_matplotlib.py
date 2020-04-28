@@ -6,6 +6,7 @@ Created on Thu Apr 23 12:43:29 2020
 from numpy import cos, sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as pat
 from matplotlib.animation import FuncAnimation
 import math
 import time
@@ -121,16 +122,59 @@ class insertObject:
     def plotObj(self):
         plt.plot(self.x0, self.y0, 'b*', lw=2.0)
         plt.annotate('Object', (self.x0+.1, self.y0))
-
+class drawPlatforms:
+    def __init__(self, x, y, w=0.2):
+        self.x = x
+        self.ytop = y
+        self.xbottom = x
+        self.ybottom = 0
+        self.width = w
+        
+    def plotObj(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
+        
 ''' Function to create the animation '''
 def update(i):
+    #start with cleared figure!
+    plt.clf()
     label = 'timestep {0}, {1} ms'.format(i,(i*dt))
+    
+    global made2Object
+    #insert object here and can now update the objects final position
+    objPos = (1.5, 1.5)
+    plat = drawPlatforms(objPos[0],objPos[1])
+    obj = insertObject(xpos=objPos[0],ypos=objPos[1])
+    # Rounding position on finger and object to two places after the decimal
+    FingerXTol = round(arm.finger[0], 2)
+    FingerYTol =round(arm.finger[1], 2)
+    objXTol = round(objPos[0], 2)
+    objYTol = round(objPos[1], 2)
+    print('Finger X pos: ' + str(FingerXTol))
+    
+    
+
     # Update the arm to the new orientation with angle changes
     max_dtheta = np.multiply(dt*10**-3,w)  # maximum angle joint can move within a timestep
     if i == 0:
-        dtheta = np.subtract(final_angles, initial_angles)
+        dtheta = np.subtract(Angles2Object, initial_angles)
+        #insert object here and can now update the objects final position
+        objPos = (1.5, 1.5)
+        obj = insertObject(xpos=objPos[0],ypos=objPos[1])
+
+    # made it to the object to pick it up!
+    elif FingerXTol == objXTol and FingerYTol == objYTol:
+        made2Object += 1
+        dtheta = np.subtract(Angles2Goal, arm.joint_angles)
+    #already "grabbed object"
+    elif made2Object > 0:
+        dtheta = np.subtract(Angles2Goal, arm.joint_angles)
+        print('made it to object!')
     else:
-        dtheta = np.subtract(final_angles, arm.joint_angles)
+        dtheta = np.subtract(Angles2Object, arm.joint_angles)
     dir = []
     for a in dtheta:
         if a > 0: dir.append(1)
@@ -153,25 +197,34 @@ def update(i):
     i += 1
     arm.update_joints(new_theta)
     ax.set_xlabel(label)
-    return arm.plot()
+    print('Made2Object: ' + str(made2Object))
+    if made2Object > 0 :
+        obj.moveObj(arm.finger[0], arm.finger[1])
+        print('Trying to move object')
+    return arm.plot(), obj.plotObj(), plat.plotObj()
 
-'''create arm and object '''
+'''create arm, object, and end goal '''
 arm = ThreeLinkArm()
 objPos = (1.5, 1.5)
 obj = insertObject(xpos=objPos[0],ypos=objPos[1])
-
+goal = (0, 1.4)
+made2Object = 0
+        
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
 w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
-phi = 0  # end effector orientation (must be solve for)
+phi = 0  # end effector orientation (must be solved for)
 tol = 1e-3  # tolerance btw arm's finger and object
 
-#Inital orientation
+#Initial orientation
 arm.update_joints(initial_angles)
 fig, ax = plt.subplots()  # initialize plot
 fig.set_tight_layout(True)
+ax.set_xlim(0,3)
+ax.set_ylim(0,3)
 arm.plot()  # plot the first orientation
 
 obj.plotObj()
+#this calculates the final angles needed to reach object
 arm.inverse_kinematics(objPos[0], objPos[1], phi)
 while np.linalg.norm(arm.finger - np.array(objPos)) >= tol:
     phi += 0.001
@@ -179,9 +232,24 @@ while np.linalg.norm(arm.finger - np.array(objPos)) >= tol:
 
 # Create animation of arm moving to final location
 dt = 100
-final_angles = arm.joint_angles
-steps = np.divide(np.subtract(final_angles,initial_angles),w*dt*10**-3)
-anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(max(abs(steps)))), interval=dt)
+Angles2Object = arm.joint_angles.copy()
+print('Angles2Object ' +str(Angles2Object))
+
+'''might need this in the update function'''
+#solve for end position to move object to!
+arm.inverse_kinematics(goal[0], goal[1], phi)
+while np.linalg.norm(arm.finger - np.array(goal)) >= tol:
+    phi += 0.001
+    arm.inverse_kinematics(goal[0], goal[1], phi)
+
+Angles2Goal = arm.joint_angles.copy()
+print('Angles 2 goal' + str(Angles2Goal))
+steps = np.divide((np.subtract(Angles2Object,initial_angles)),w*dt*10**-3)
+steps2 = np.divide(+ np.subtract(Angles2Goal, Angles2Object), w*dt*10**-3)
+print('Number of steps: ' + str(steps))
+print('Number of steps2: ' + str(steps2))
+totalsteps = max(abs(steps)) + max(abs(steps2))
+anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)), interval=dt)
 
 # save a gif of the animation using the writing package from magick
 anim.save('arm_test1.gif', dpi=80, writer='imagemagick')
