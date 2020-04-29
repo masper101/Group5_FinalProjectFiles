@@ -11,6 +11,33 @@ from matplotlib.animation import FuncAnimation
 import math
 import time
 
+print("Enter the object starting and target locations below. Range 0-3")
+while True:
+    objx = eval(input("Starting x position: "))
+    if objx >= 0 and objx <= 3:
+        break
+    else:
+        print("Position out of range. Please enter a value between 0 and 3.")
+while True:
+    objy = eval(input("Starting y position: "))
+    if objy >= 0 and objy <= 3:
+        break
+    else:
+        print("Position out of range. Please enter a value between 0 and 3.")
+while True:
+    targx = eval(input("Target x position: "))
+    if targx >= 0 and targx <= 3:
+        break
+    else:
+        print("Position out of range. Please enter a value between 0 and 3.")
+while True:
+    targy = eval(input("Target y position: "))
+    if targy >= 0 and targy <= 3:
+        break
+    else:
+        print("Position out of range. Please enter a value between 0 and 3.")
+
+
 #creates three joint arm
 class ThreeLinkArm():
     def __init__(self, joint_angles=[0, 0, 0]):
@@ -147,7 +174,7 @@ def update(i):
     
     global made2Object
     #insert object here and can now update the objects final position
-    objPos = (1.5, 1.5)
+    objPos = (objx, objy)
     plat = drawPlatforms(objPos[0],objPos[1])
     obj = insertObject(xpos=objPos[0],ypos=objPos[1])
     # Rounding position on finger and object to two places after the decimal
@@ -164,7 +191,7 @@ def update(i):
     if i == 0:
         dtheta = np.subtract(Angles2Object, initial_angles)
         #insert object here and can now update the objects final position
-        objPos = (1.5, 1.5)
+        objPos = (objx, objy)
         obj = insertObject(xpos=objPos[0],ypos=objPos[1])
 
     # made it to the object to pick it up!
@@ -207,9 +234,9 @@ def update(i):
 
 '''create arm, object, and end goal '''
 arm = ThreeLinkArm()
-objPos = (1.5, 1.5)
+objPos = (objx, objy)
 obj = insertObject(xpos=objPos[0],ypos=objPos[1])
-goal = (0, 1.4)
+goal = (targx, targy)
 made2Object = 0
         
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
