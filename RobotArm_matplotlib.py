@@ -113,6 +113,11 @@ class insertObject:
     def plotObj(self):
         plt.plot(self.x0, self.y0, 'b*', lw=2.0)
         plt.annotate('Object', (self.x0+.1, self.y0))
+
+    def plotGoal(self):
+        plt.plot(self.x0, self.y0, 'go', lw=2.0)
+        plt.annotate('Goal', (self.x0 + .1, self.y0))
+
 class drawPlatforms:
     def __init__(self, x, y, w=0.2):
         self.x = x
@@ -128,18 +133,28 @@ class drawPlatforms:
         plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
         plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
 
+    def plotGoal(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'g')
+        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'g')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'g')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'g')
+
 ''' Function to create the animation '''
 def update(i):
-    global objPos, made2Object
+    global objPos, made2Object, goal
     #start with cleared figure!
     plt.cla()
-    ax.set_xlim(0,3)
+    ax.set_xlim(-0.25, 3)
     ax.set_ylim(0,3)
     label = 'timestep {0}, {1} ms, Configuration {2}'.format(i, (i*dt), (n+m))
 
     #insert object here and can now update the objects final position
     plat = drawPlatforms(objPos[0],objPos[1])
     obj = insertObject(xpos=objPos[0],ypos=objPos[1])
+    goal_obj = insertObject(xpos=goal[0],ypos=goal[1])
+    goal_plat = drawPlatforms(goal[0],goal[1])
+
     # Rounding position on finger and object to two places after the decimal
     FingerXTol = round(arm.finger[0], 2)
     FingerYTol =round(arm.finger[1], 2)
@@ -154,6 +169,7 @@ def update(i):
         dtheta = np.subtract(Angles2Object[n], initial_angles)
         #insert object here and can now update the objects final position
         obj = insertObject(xpos=objPos[0],ypos=objPos[1])
+        goal_obj = insertObject(xpos=goal[0], ypos=goal[1])
         made2Object = 0
 
     # made it to the object to pick it up!
@@ -197,7 +213,7 @@ def update(i):
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
         print('Trying to move object')
-    return arm.plot(), obj.plotObj(), plat.plotObj()
+    return arm.plot(), obj.plotObj(), plat.plotObj(), goal_obj.plotGoal(), goal_plat.plotGoal()
 
 
 def objectCoord():
@@ -322,68 +338,31 @@ while cnt < 4:
 
 
 # runs animation for each optimization
+best = [] # best config based on min time [[sigma (to obj), method (to obj), phi (to obj)]
+          # [sigma (to goal), method (to goal), phi (to goal)], time to solve]
+
 steps = []; steps2 = []; totalsteps = []
 for n in range(len(Angles2Object)):
     steps.append(np.divide((np.subtract(Angles2Object[n], initial_angles)),w*dt*10**-3))
     for m in range(len(Angles2Goal)):
         steps2.append(np.divide((np.subtract(Angles2Goal[m], Angles2Object[n])), w*dt*10**-3))
         totalsteps.append(max(abs(steps[n])) + max(abs(steps2[m])))
+        if not best:
+            best.append([solutions[n][0],solutions[n][1],solutions[n][2]])
+            best.append([goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]])
+            best.append(totalsteps[-1])
+        elif best[-1] > totalsteps[-1]:
+            best[0] = [solutions[n][0], solutions[n][1], solutions[n][2]]
+            best[1] = [goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]]
+            best[-1] = totalsteps[-1]
         anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps[-1])), interval=dt)
 
         # save a gif of the animation for each solution
-        anim.save('optimization {}.gif'.format(len(totalsteps)), dpi=80, writer='imagemagick')
+        anim.save('optimization2 {}.gif'.format(len(totalsteps)), dpi=80, writer='imagemagick')
 
 # Print results
 print('\n=============\nResults:\n')
 print('The Fastest Solution Time: %.2f s' % min(np.array(totalsteps)/10))
 print('Configuration: %d' % totalsteps.index(min(totalsteps)))
-# print('To Object Solution Paramters: \nphi = %.2f degrees\nsigma = %d' % (solutions[totalsteps.index(min(totalsteps))][2],
-#                                                                 solutions[totalsteps.index(min(totalsteps))][0]))
-# print('To Goal Solution Paramters: \nphi = %.2f degrees\nsigma = %d' % (solutions[totalsteps.index(min(totalsteps))][2],
-#                                                                         solutions[totalsteps.index(min(totalsteps))][
-#                                                                             0]))
-
-
-
-# ''' Arm Schematic Plot Below'''
-# arm = ThreeLinkArm()
-# initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
-# [theta0, theta1, theta2] = initial_angles
-# arm.update_joints(initial_angles)  # test configuraton
-# arm.plot()  # test plot
-#
-# def label_diagram():
-#     plt.plot([0, 0.5], [0, 0], 'k--')
-#     plt.plot([arm.elbow[0], arm.elbow[0]+0.5*cos(theta0)],
-#              [arm.elbow[1], arm.elbow[1]+0.5*sin(theta0)],
-#              'k--')
-#
-#     # [arm.wrist[1], arm.wrist[1]+0.5*sin(theta2)]
-#
-#     draw_angle(theta0, r=0.25)
-#     draw_angle(theta1, offset=theta0, origin=[arm.elbow[0], arm.elbow[1]], r=0.25)
-#     draw_angle(theta2, offset=theta1+theta0, origin=[arm.wrist[0], arm.wrist[1]], r=0.25)
-#
-#     plt.annotate("$l_0$", xy=(0.5, 0.4), size=15, color="r")
-#     plt.annotate("$l_1$", xy=(0.8, 1), size=15, color="r")
-#     plt.annotate("$l_2$", xy=(0.7, 1.75), size=15, color="r")
-#
-#     plt.annotate(r"$\theta_0$", xy=(0.35, 0.05), size=15)
-#     plt.annotate(r"$\theta_1$", xy=(1, 0.8), size=15)
-#     plt.annotate(r"$\theta_2$", xy=(1, 1.75), size=15)
-#
-# label_diagram()
-#
-# plt.annotate("Shoulder", xy=(arm.shoulder[0], arm.shoulder[1]), xytext=(0.15, 0.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Elbow", xy=(arm.elbow[0], arm.elbow[1]), xytext=(1.25, 0.25),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Wrist", xy=(arm.wrist[0], arm.wrist[1]), xytext=(1.5, 1.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Finger", xy=(arm.finger[0], arm.finger[1]), xytext=(0, 1.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-#
-#
-# plt.axis("equal")
-#
-# plt.show()
+print('To Object Solution Parameters: \nphi = %.2f degrees\nsigma = %d' % (best[0][2], best[0][0]))
+print('To Goal Solution Parameters: \nphi = %.2f degrees\nsigma = %d' % (best[1][2], best[1][0]))
