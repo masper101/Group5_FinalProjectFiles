@@ -165,13 +165,17 @@ class drawPlatforms:
         
     def plotObj(self):
         # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
-        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
-        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
-        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
-        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
+        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop)
+        ax.add_patch(rect)
         
 ''' Function to create the animation '''
 def update(i):
+    if i > math.ceil(totalsteps):
+        pass
     #start with cleared figure!
     plt.cla()
     ax.set_xlim(0,3)
@@ -182,6 +186,7 @@ def update(i):
     #insert object here and can now update the objects final position
     objPos = (objx, objy)
     plat = drawPlatforms(objPos[0],objPos[1])
+    plattarg = drawPlatforms(targx,targy)
     obj = insertObject(xpos=objPos[0],ypos=objPos[1])
     # Rounding position on finger and object to two places after the decimal
     FingerXTol = round(arm.finger[0], 2)
@@ -236,7 +241,7 @@ def update(i):
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
         print('Trying to move object')
-    return arm.plot(), obj.plotObj(), plat.plotObj()
+    return arm.plot(), obj.plotObj(), plat.plotObj(), plattarg.plotObj()
 
 '''create arm, object, and end goal '''
 arm = ThreeLinkArm()
@@ -282,7 +287,7 @@ steps2 = np.divide(+ np.subtract(Angles2Goal, Angles2Object), w*dt*10**-3)
 print('Number of steps: ' + str(steps))
 print('Number of steps2: ' + str(steps2))
 totalsteps = max(abs(steps)) + max(abs(steps2))
-anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)), interval=dt)
+anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)+30), interval=dt)
 
 # save a gif of the animation using the writing package from magick
 anim.save(gifname, dpi=80, writer='imagemagick')
