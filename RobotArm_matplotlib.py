@@ -172,8 +172,8 @@ class drawPlatforms:
 
 ''' Function to create the animation '''
 def update(i):
-    # if i > math.ceil(totalsteps[-1]):
-    #     pass
+    if i > math.ceil(totalsteps[-1]):
+        return
     global objPos, made2Object, goal
     #start with cleared figure!
     plt.cla()
