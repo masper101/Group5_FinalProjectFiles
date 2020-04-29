@@ -65,7 +65,7 @@ class ThreeLinkArm():
         
 #        print('MinSteps type ' + str(type(minSteps)))
 
-        for phi in listPhi_object:
+        for phi in listPhi:
             self.inverse_kinematics(objX, objY, phi)
             Angles2Object = self.joint_angles
             MaxSteps = max(abs(np.divide(np.subtract(Angles2Object,startAngles),w*dt*10**-3)))
@@ -204,7 +204,9 @@ def update(i):
     #already "grabbed object"
     elif made2Object > 0:
         dtheta = np.subtract(Angles2Goal, arm.joint_angles)
-        print('made it to object!')
+        
+        #print('made it to object!')
+        
     else:
         dtheta = np.subtract(Angles2Obj, arm.joint_angles)
     dir = []
@@ -229,10 +231,14 @@ def update(i):
     i += 1
     arm.update_joints(new_theta)
     ax.set_xlabel(label)
-    print('Made2Object: ' + str(made2Object))
+    
+   # print('Made2Object: ' + str(made2Object))
+   
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
-        print('Trying to move object')
+        
+        #print('New Position: ' + str(arm.finger[0]) + ', ' + str(arm.finger[1]))
+        
     return arm.plot(), obj.plotObj(), plat.plotObj()
 
 '''create arm, object, and end goal '''
@@ -250,7 +256,6 @@ tol = 1e-3  # tolerance btw arm's finger and object
 #Initial orientation
 arm.update_joints(initial_angles)
 fig, ax = plt.subplots()  # initialize plot
-# fig.set_tight_layout(True)
 arm.plot()  # plot the first orientation
 
 #obj.plotObj()
@@ -261,7 +266,7 @@ arm.inverse_kinematics(objPos[0], objPos[1], phi)
 
 #checking phi from 0 to 2pi radians
 while phi < 6.2832:
-    while np.linalg.norm(arm.finger - np.array(objPos)) >= tol:
+    while np.linalg.norm(arm.finger - np.array(objPos)) >= tol and phi < 6.2832:
         phi += 0.001
         arm.inverse_kinematics(objPos[0], objPos[1], phi)
     if np.linalg.norm(arm.finger - np.array(objPos)) < tol:
@@ -270,40 +275,47 @@ while phi < 6.2832:
         phi += 0.001
         arm.inverse_kinematics(objPos[0], objPos[1], phi)
     
-print('ListPhi Object: ' + str(listPhi_object))
-
 # Create animation of arm moving to final location
 dt = 100
-'''
-Angles2Object = arm.joint_angles.copy()
-print('Angles2Object ' +str(Angles2Object))
-'''
 
 '''might need this in the update function'''
 #solve for end position to move object to!
 listPhi_goal = []
 arm.inverse_kinematics(goal[0], goal[1], phi)
 #checking phi from 0 to 2pi radians
+phi = 0
 while phi < 6.2832:
-    while np.linalg.norm(arm.finger - np.array(goal)) >= tol:
+    while np.linalg.norm(arm.finger - np.array(goal)) >= tol and phi < 6.2832:
         phi += 0.001
         arm.inverse_kinematics(goal[0], goal[1], phi)
-    listPhi_goal.append(phi)
-    print('Added new phi value Goal: ' + str(phi))
-    phi += 0.001
+    if np.linalg.norm(arm.finger - np.array(goal)) < tol:
+        listPhi_goal.append(phi)
+        print('Added new phi value goal: ' + str(phi))
+        phi += 0.001
+        arm.inverse_kinematics(goal[0], goal[1], phi)
 
-'''
-Angles2Goal = arm.joint_angles.copy()
-print('Angles 2 goal' + str(Angles2Goal))
-'''
-#determin phi's with least amount of steps -> least amount of time
+
+print('ListPhi Object: ' + str(listPhi_object))
+print('listPhi Goal: ' + str(listPhi_goal))
+
+#determine phi's with least amount of steps -> least amount of time
 bestPhi_obj = arm.findBestPhi(listPhi_object, objPos[0], objPos[1], initial_angles)
 arm.inverse_kinematics(objPos[0], objPos[1], bestPhi_obj)
 Angles2Obj = arm.joint_angles.copy()
 
+
+
+#finding phi for goal 
 bestPhi_goal = arm.findBestPhi(listPhi_goal, goal[0], goal[1], Angles2Obj)
 arm.inverse_kinematics(goal[0], goal[1], bestPhi_goal)
 Angles2Goal = arm.joint_angles.copy()
+
+
+# print('Angles to Object: ' + str(Angles2Obj))
+# print('Angles 2 goal: ' + str(Angles2Goal))
+
+# print('Best Phi Obj: ' + str(bestPhi_obj))
+# print('Best phi goal: ' + str(bestPhi_goal))
 
 steps = np.divide((np.subtract(Angles2Obj,initial_angles)),w*dt*10**-3)
 steps2 = np.divide(np.subtract(Angles2Goal, Angles2Obj), w*dt*10**-3)
@@ -313,44 +325,4 @@ totalsteps = max(abs(steps)) + max(abs(steps2))
 anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)), interval=dt, repeat_delay = 300)
 
 # save a gif of the animation using the writing package from magick
-anim.save('arm_test1.gif', dpi=80, writer='imagemagick')
-
-# arm.update_joints([theta0, theta1, theta2])  # test configuraton
-# arm.plot()  # test plot
-
-# ''' Test Annotation '''
-# def label_diagram():
-#     plt.plot([0, 0.5], [0, 0], 'k--')
-#     plt.plot([arm.elbow[0], arm.elbow[0]+0.5*cos(theta0)],
-#              [arm.elbow[1], arm.elbow[1]+0.5*sin(theta0)],
-#              'k--')
-#
-#     # [arm.wrist[1], arm.wrist[1]+0.5*sin(theta2)]
-#
-#     draw_angle(theta0, r=0.25)
-#     draw_angle(theta1, offset=theta0, origin=[arm.elbow[0], arm.elbow[1]], r=0.25)
-#     draw_angle(theta2, offset=theta1+theta0, origin=[arm.wrist[0], arm.wrist[1]], r=0.25)
-#
-#     plt.annotate("$l_0$", xy=(0.5, 0.4), size=15, color="r")
-#     plt.annotate("$l_1$", xy=(0.8, 1), size=15, color="r")
-#     plt.annotate("$l_2$", xy=(0.7, 1.75), size=15, color="r")
-#
-#     plt.annotate(r"$\theta_0$", xy=(0.35, 0.05), size=15)
-#     plt.annotate(r"$\theta_1$", xy=(1, 0.8), size=15)
-#     plt.annotate(r"$\theta_2$", xy=(1, 1.75), size=15)
-#
-# label_diagram()
-#
-# plt.annotate("Shoulder", xy=(arm.shoulder[0], arm.shoulder[1]), xytext=(0.15, 0.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Elbow", xy=(arm.elbow[0], arm.elbow[1]), xytext=(1.25, 0.25),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Wrist", xy=(arm.wrist[0], arm.wrist[1]), xytext=(1.5, 1.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Finger", xy=(arm.finger[0], arm.finger[1]), xytext=(0, 1.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-
-
-# plt.axis("equal")
-
-# plt.show()
+anim.save('arm_test_Optimized.gif', dpi=80, writer='imagemagick')
