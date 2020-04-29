@@ -36,6 +36,12 @@ while True:
         break
     else:
         print("Position out of range. Please enter a value between 0 and 3.")
+gif = input("Please enter the filename for the saved GIF: ")
+
+if gif[-4:] == ".gif":
+    gifname = gif
+else:
+    gifname = gif + ".gif"
 
 
 #creates three joint arm
@@ -279,7 +285,7 @@ totalsteps = max(abs(steps)) + max(abs(steps2))
 anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)), interval=dt)
 
 # save a gif of the animation using the writing package from magick
-anim.save('arm_test1.gif', dpi=80, writer='imagemagick')
+anim.save(gifname, dpi=80, writer='imagemagick')
 
 # arm.update_joints([theta0, theta1, theta2])  # test configuraton
 # arm.plot()  # test plot
