@@ -163,17 +163,18 @@ class drawPlatforms:
         self.ybottom = 0
         self.width = w
         
-    def plotObj(self):
+    def plotObj(self,color='b'):
         # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
         # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
         # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
         # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
         # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
-        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop)
+        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor=color)
         ax.add_patch(rect)
         
 ''' Function to create the animation '''
 def update(i):
+    global totalsteps
     if i > math.ceil(totalsteps):
         pass
     #start with cleared figure!
@@ -241,7 +242,7 @@ def update(i):
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
         # print('Trying to move object')
-    return arm.plot(), obj.plotObj(), plat.plotObj(), plattarg.plotObj()
+    return arm.plot(), obj.plotObj(), plat.plotObj(), plattarg.plotObj(color='g')
 
 '''create arm, object, and end goal '''
 arm = ThreeLinkArm()
