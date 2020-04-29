@@ -6,6 +6,7 @@ Created on Thu Apr 23 12:43:29 2020
 from numpy import cos, sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as pat
 from matplotlib.animation import FuncAnimation
 import math
 import time
@@ -40,6 +41,12 @@ class ThreeLinkArm():
 
         gamma = np.arctan2(-self.yp/sqrt(self.xp**2 + self.yp**2), self.xp/sqrt(self.xp**2 + self.yp**2))
         sigma = 1
+        
+        arccosTerm = -(self.xp**2 + self.yp**2 + self.link_lengths[0]**2 - self.link_lengths[1]**2)/(2*self.link_lengths[0]*sqrt(self.xp**2 + self.yp**2))
+                                         
+        #take care of possible unsolvable problems 
+        if arccosTerm < -1 or arccosTerm > 1:
+            return
 
         theta0 = gamma + sigma*np.arccos(-(self.xp**2 + self.yp**2 + self.link_lengths[0]**2 - self.link_lengths[1]**2)
                                          / (2*self.link_lengths[0]*sqrt(self.xp**2 + self.yp**2)))
@@ -50,7 +57,30 @@ class ThreeLinkArm():
         theta2 = self.phi - theta0 - theta1
 
         return self.update_joints([theta0, theta1, theta2])
+    
+    
+    def findBestPhi (self, listPhi, objX, objY, startAngles):
+        bestPhi = 0
+        minSteps = 0
+        
+#        print('MinSteps type ' + str(type(minSteps)))
 
+        for phi in listPhi_object:
+            self.inverse_kinematics(objX, objY, phi)
+            Angles2Object = self.joint_angles
+            MaxSteps = max(abs(np.divide(np.subtract(Angles2Object,startAngles),w*dt*10**-3)))
+            
+#            print('MaxSteps: ' +str(MaxSteps) + ' steps type: ' + str(type(MaxSteps)))
+
+            if minSteps == 0:
+                minSteps = MaxSteps
+                bestPhi = phi
+            elif MaxSteps < minSteps:
+                minSteps = MaxSteps
+                bestPhi = phi
+        return (bestPhi)
+        
+        
     def plot(self):
         plt.plot([self.shoulder[0], self.elbow[0],],
                  [self.shoulder[1], self.elbow[1]],
@@ -121,30 +151,48 @@ class insertObject:
     def plotObj(self):
         plt.plot(self.x0, self.y0, 'b*', lw=2.0)
         plt.annotate('Object', (self.x0+.1, self.y0))
-
+class drawPlatforms:
+    def __init__(self, x, y, w=0.2):
+        self.x = x
+        self.ytop = y
+        self.xbottom = x
+        self.ybottom = 0
+        self.width = w
+        
+    def plotObj(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
+        
 ''' Function to create the animation '''
 def update(i):
     #start with cleared figure!
-    plt.clf()
+    plt.cla()
+    ax.set_xlim(-3,3)
+    ax.set_ylim(0,3)
     label = 'timestep {0}, {1} ms'.format(i,(i*dt))
     
     global made2Object
     #insert object here and can now update the objects final position
     objPos = (1.5, 1.5)
+    plat = drawPlatforms(objPos[0],objPos[1])
     obj = insertObject(xpos=objPos[0],ypos=objPos[1])
     # Rounding position on finger and object to two places after the decimal
     FingerXTol = round(arm.finger[0], 2)
     FingerYTol =round(arm.finger[1], 2)
     objXTol = round(objPos[0], 2)
     objYTol = round(objPos[1], 2)
-    print('Finger X pos: ' + str(FingerXTol))
+ 
+    #print('Finger X pos: ' + str(FingerXTol))
     
     
 
     # Update the arm to the new orientation with angle changes
     max_dtheta = np.multiply(dt*10**-3,w)  # maximum angle joint can move within a timestep
     if i == 0:
-        dtheta = np.subtract(Angles2Object, initial_angles)
+        dtheta = np.subtract(Angles2Obj, initial_angles)
         #insert object here and can now update the objects final position
         objPos = (1.5, 1.5)
         obj = insertObject(xpos=objPos[0],ypos=objPos[1])
@@ -158,7 +206,7 @@ def update(i):
         dtheta = np.subtract(Angles2Goal, arm.joint_angles)
         print('made it to object!')
     else:
-        dtheta = np.subtract(Angles2Object, arm.joint_angles)
+        dtheta = np.subtract(Angles2Obj, arm.joint_angles)
     dir = []
     for a in dtheta:
         if a > 0: dir.append(1)
@@ -185,7 +233,7 @@ def update(i):
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
         print('Trying to move object')
-    return arm.plot(), obj.plotObj()
+    return arm.plot(), obj.plotObj(), plat.plotObj()
 
 '''create arm, object, and end goal '''
 arm = ThreeLinkArm()
@@ -196,42 +244,100 @@ made2Object = 0
         
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
 w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
-phi = 0  # end effector orientation (must be solve for)
+phi = 0  # end effector orientation (must be solved for)
 tol = 1e-3  # tolerance btw arm's finger and object
 
-#Inital orientation
+#Initial orientation
 arm.update_joints(initial_angles)
 fig, ax = plt.subplots()  # initialize plot
-fig.set_tight_layout(True)
+# fig.set_tight_layout(True)
 arm.plot()  # plot the first orientation
 
-obj.plotObj()
+#obj.plotObj()
+
 #this calculates the final angles needed to reach object
+listPhi_object = []
 arm.inverse_kinematics(objPos[0], objPos[1], phi)
-while np.linalg.norm(arm.finger - np.array(objPos)) >= tol:
-    phi += 0.001
-    arm.inverse_kinematics(objPos[0], objPos[1], phi)
+
+#checking phi from 0 to 2pi radians
+while phi < 6.2832:
+    while np.linalg.norm(arm.finger - np.array(objPos)) >= tol:
+        phi += 0.001
+        arm.inverse_kinematics(objPos[0], objPos[1], phi)
+    if np.linalg.norm(arm.finger - np.array(objPos)) < tol:
+        listPhi_object.append(phi)
+        print('Added new phi value Obj: ' + str(phi))
+        phi += 0.001
+        arm.inverse_kinematics(objPos[0], objPos[1], phi)
+    
+print('ListPhi Object: ' + str(listPhi_object))
 
 # Create animation of arm moving to final location
 dt = 100
+'''
 Angles2Object = arm.joint_angles.copy()
 print('Angles2Object ' +str(Angles2Object))
+'''
 
 '''might need this in the update function'''
 #solve for end position to move object to!
+listPhi_goal = []
 arm.inverse_kinematics(goal[0], goal[1], phi)
-while np.linalg.norm(arm.finger - np.array(goal)) >= tol:
+#checking phi from 0 to 2pi radians
+while phi < 6.2832:
+    while np.linalg.norm(arm.finger - np.array(goal)) >= tol:
+        phi += 0.001
+        arm.inverse_kinematics(goal[0], goal[1], phi)
+    listPhi_goal.append(phi)
+    print('Added new phi value Goal: ' + str(phi))
     phi += 0.001
-    arm.inverse_kinematics(goal[0], goal[1], phi)
 
+'''
 Angles2Goal = arm.joint_angles.copy()
 print('Angles 2 goal' + str(Angles2Goal))
-steps = np.divide((np.subtract(Angles2Object,initial_angles)),w*dt*10**-3)
-steps2 = np.divide(+ np.subtract(Angles2Goal, Angles2Object), w*dt*10**-3)
+'''
+#determin phi's with least amount of steps -> least amount of time
+bestPhi_obj = arm.findBestPhi(listPhi_object, objPos[0], objPos[1], initial_angles)
+arm.inverse_kinematics(objPos[0], objPos[1], bestPhi_obj)
+Angles2Obj = arm.joint_angles.copy()
+
+bestPhi_goal = arm.findBestPhi(listPhi_goal, goal[0], goal[1], Angles2Obj)
+arm.inverse_kinematics(goal[0], goal[1], bestPhi_goal)
+Angles2Goal = arm.joint_angles.copy()
+
+
+# for phi in listPhi_object:
+#     arm.inverse_kinematics(objPos[0], objPos[1], phi)
+#     Angles2Object = arm.joint_angles.copy()
+#     steps = np.divide(np.subtract(Angles2Object,initial_angles),w*dt*10**-3)
+#     if minSteps == 0:
+#         minSteps = steps
+#         bestPhi_obj = phi
+#     elif steps < minSteps:
+#         minSteps = steps
+#         bestPhi_obj = phi
+
+
+# bestPhi_goal = 0
+# minStepsGoal = 0
+# for phi in listPhi_goal:
+#     arm.inverse_kinematics(objPos[0], objPos[1], phi)
+#     Angles2Goal = arm.joint_angles.copy()
+#     steps = np.divide(np.subtract(Angles2Goal,initial_angles),w*dt*10**-3)
+#     if minStepsGoal == 0:
+#         minStepsGoal = steps
+#         bestPhi_goal = phi
+#     elif steps < minStepsGoal:
+#         minStepsGoal = steps
+#         bestPhi_goal = phi
+
+
+steps = np.divide((np.subtract(Angles2Obj,initial_angles)),w*dt*10**-3)
+steps2 = np.divide(np.subtract(Angles2Goal, Angles2Obj), w*dt*10**-3)
 print('Number of steps: ' + str(steps))
 print('Number of steps2: ' + str(steps2))
 totalsteps = max(abs(steps)) + max(abs(steps2))
-anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)), interval=dt)
+anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)), interval=dt, repeat_delay = 300)
 
 # save a gif of the animation using the writing package from magick
 anim.save('arm_test1.gif', dpi=80, writer='imagemagick')
