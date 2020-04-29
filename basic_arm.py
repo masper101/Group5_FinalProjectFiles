@@ -176,7 +176,7 @@ class drawPlatforms:
 def update(i):
     global totalsteps
     if i > math.ceil(totalsteps):
-        pass
+        return
     #start with cleared figure!
     plt.cla()
     ax.set_xlim(0,3)
