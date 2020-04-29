@@ -305,33 +305,6 @@ bestPhi_goal = arm.findBestPhi(listPhi_goal, goal[0], goal[1], Angles2Obj)
 arm.inverse_kinematics(goal[0], goal[1], bestPhi_goal)
 Angles2Goal = arm.joint_angles.copy()
 
-
-# for phi in listPhi_object:
-#     arm.inverse_kinematics(objPos[0], objPos[1], phi)
-#     Angles2Object = arm.joint_angles.copy()
-#     steps = np.divide(np.subtract(Angles2Object,initial_angles),w*dt*10**-3)
-#     if minSteps == 0:
-#         minSteps = steps
-#         bestPhi_obj = phi
-#     elif steps < minSteps:
-#         minSteps = steps
-#         bestPhi_obj = phi
-
-
-# bestPhi_goal = 0
-# minStepsGoal = 0
-# for phi in listPhi_goal:
-#     arm.inverse_kinematics(objPos[0], objPos[1], phi)
-#     Angles2Goal = arm.joint_angles.copy()
-#     steps = np.divide(np.subtract(Angles2Goal,initial_angles),w*dt*10**-3)
-#     if minStepsGoal == 0:
-#         minStepsGoal = steps
-#         bestPhi_goal = phi
-#     elif steps < minStepsGoal:
-#         minStepsGoal = steps
-#         bestPhi_goal = phi
-
-
 steps = np.divide((np.subtract(Angles2Obj,initial_angles)),w*dt*10**-3)
 steps2 = np.divide(np.subtract(Angles2Goal, Angles2Obj), w*dt*10**-3)
 print('Number of steps: ' + str(steps))
