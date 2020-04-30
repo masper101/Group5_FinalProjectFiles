@@ -1,7 +1,5 @@
 """
-Created on Thu Apr 23 12:43:29 2020
-
-@author: Emily Brady
+@author: Emily Brady, Matt Asper, Connor Gunsbury
 """
 from numpy import cos, sin, sqrt
 import numpy as np
@@ -37,12 +35,6 @@ while True:
         print("Position out of range. Please enter a value between 0 and 3.")
 gif = input("Please enter a prefix for the saved GIF: ")
 
-# if gif[-4:] == ".gif":
-#     gifname = gif
-# else:
-#     gifname = gif + ".gif"
-    
-    
 #creates three joint arm
 class ThreeLinkArm():
     def __init__(self, joint_angles=[0, 0, 0]):

@@ -1,7 +1,5 @@
 """
-Created on Thu Apr 23 12:43:29 2020
-
-@author: Emily Brady
+@author: Emily Brady, Matt Asper, Connor Gunsbury
 """
 from numpy import cos, sin, sqrt
 import numpy as np
@@ -164,11 +162,6 @@ class drawPlatforms:
         self.width = w
         
     def plotObj(self,color='b'):
-        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
-        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
-        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
-        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
-        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
         rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor=color)
         ax.add_patch(rect)
         
@@ -292,43 +285,3 @@ anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps)+30),
 
 # save a gif of the animation using the writing package from magick
 anim.save(gifname, dpi=80, writer='imagemagick')
-
-# arm.update_joints([theta0, theta1, theta2])  # test configuraton
-# arm.plot()  # test plot
-
-# ''' Test Annotation '''
-# def label_diagram():
-#     plt.plot([0, 0.5], [0, 0], 'k--')
-#     plt.plot([arm.elbow[0], arm.elbow[0]+0.5*cos(theta0)],
-#              [arm.elbow[1], arm.elbow[1]+0.5*sin(theta0)],
-#              'k--')
-#
-#     # [arm.wrist[1], arm.wrist[1]+0.5*sin(theta2)]
-#
-#     draw_angle(theta0, r=0.25)
-#     draw_angle(theta1, offset=theta0, origin=[arm.elbow[0], arm.elbow[1]], r=0.25)
-#     draw_angle(theta2, offset=theta1+theta0, origin=[arm.wrist[0], arm.wrist[1]], r=0.25)
-#
-#     plt.annotate("$l_0$", xy=(0.5, 0.4), size=15, color="r")
-#     plt.annotate("$l_1$", xy=(0.8, 1), size=15, color="r")
-#     plt.annotate("$l_2$", xy=(0.7, 1.75), size=15, color="r")
-#
-#     plt.annotate(r"$\theta_0$", xy=(0.35, 0.05), size=15)
-#     plt.annotate(r"$\theta_1$", xy=(1, 0.8), size=15)
-#     plt.annotate(r"$\theta_2$", xy=(1, 1.75), size=15)
-#
-# label_diagram()
-#
-# plt.annotate("Shoulder", xy=(arm.shoulder[0], arm.shoulder[1]), xytext=(0.15, 0.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Elbow", xy=(arm.elbow[0], arm.elbow[1]), xytext=(1.25, 0.25),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Wrist", xy=(arm.wrist[0], arm.wrist[1]), xytext=(1.5, 1.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-# plt.annotate("Finger", xy=(arm.finger[0], arm.finger[1]), xytext=(0, 1.5),
-#     arrowprops=dict(facecolor='black', shrink=0.05))
-
-
-# plt.axis("equal")
-
-# plt.show()
