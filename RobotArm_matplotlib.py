@@ -35,6 +35,8 @@ while True:
         print("Position out of range. Please enter a value between 0 and 3.")
 gif = input("Please enter a prefix for the saved GIF: ")
 
+dphi = 0.005
+
 #creates three joint arm
 class ThreeLinkArm():
     def __init__(self, joint_angles=[0, 0, 0]):
@@ -263,7 +265,7 @@ phi = 0; phi0 = 0
 
 # Determine if object can be reached with the arm's specified geometry
 while not conditional(arm.link_lengths[2], objPos, phi):
-    phi += 0.001
+    phi += dphi
     if phi >= np.pi*2:
         print('ERROR. Object can not be reached. \nPlease enter another location:\n')
         (objPos) = (objx,objy)
@@ -286,7 +288,7 @@ arm.inverse_kinematics(objPos[0], objPos[1], phi)
 parameters = {'sigma': 1, 'method': 1}  # dictionary to specify how to solve inverse kinematics (IK)
 solutions = []  # save solution parameters [sigma, method, phi]
 while cnt < 4:
-    phi += 0.001
+    phi += dphi
     if conditional(arm.link_lengths[2], objPos, phi): arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
@@ -301,7 +303,7 @@ while cnt < 4:
         print('SOLVED!')
         Angles2Object.append(arm.joint_angles.copy())
         solutions.append([parameters['sigma'], parameters['method'], arm.phi*360/2/np.pi])
-        phi += 0.001
+        phi += dphi
         arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
 
 
@@ -314,7 +316,7 @@ dt = 100
 # Determine if goal can be reached with the arm's specified geometry
 phi = 0; phi0 = 0
 while not conditional(arm.link_lengths[2], goal, phi):
-    phi += 0.001
+    phi += dphi
     if phi >= np.pi*2:
         print('ERROR. Goal can not be reached. \nPlease enter another location:\n')
         (goal) = (targx,targy)
@@ -330,7 +332,7 @@ goal_solutions = []  # save solution parameters [sigma, method, phi]
 
 arm.inverse_kinematics(goal[0], goal[1], phi)
 while cnt < 4:
-    phi += 0.001
+    phi += dphi
     if conditional(arm.link_lengths[2], goal, phi): arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
@@ -345,7 +347,7 @@ while cnt < 4:
         print('SOLVED!')
         Angles2Goal.append(arm.joint_angles.copy())
         goal_solutions.append([goal_parameters['sigma'], goal_parameters['method'], arm.phi*360/2/np.pi])
-        phi += 0.001
+        phi += dphi
         arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
 
 
