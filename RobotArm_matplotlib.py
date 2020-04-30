@@ -35,7 +35,7 @@ while True:
         print("Position out of range. Please enter a value between 0 and 3.")
 gif = input("Please enter a prefix for the saved GIF: ")
 
-dphi = 0.005
+dphi = 0.001
 
 #creates three joint arm
 class ThreeLinkArm():
