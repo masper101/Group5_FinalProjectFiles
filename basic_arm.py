@@ -99,48 +99,6 @@ class ThreeLinkArm():
         plt.plot(self.wrist[0], self.wrist[1], 'ko')
         plt.plot(self.finger[0], self.finger[1], 'ko')
 
-    def axplot(self):
-        def plot(self):
-            ax.plot([self.shoulder[0], self.elbow[0], ],
-                     [self.shoulder[1], self.elbow[1]],
-                     'r-')
-            ax.plot([self.elbow[0], self.wrist[0]],
-                     [self.elbow[1], self.wrist[1]],
-                     'r-')
-            ax.plot([self.wrist[0], self.finger[0]],
-                     [self.wrist[1], self.finger[1]],
-                     'r-')
-
-            ax.plot(self.shoulder[0], self.shoulder[1], 'ko')
-            ax.plot(self.elbow[0], self.elbow[1], 'ko')
-            ax.plot(self.wrist[0], self.wrist[1], 'ko')
-            ax.plot(self.finger[0], self.finger[1], 'ko')
-
-'''functions to help draw the angles
-did not modify these in any way'''
-def transform_points(points, theta, origin):
-    T = np.array([[cos(theta), -sin(theta), origin[0]],
-                  [sin(theta), cos(theta), origin[1]],
-                  [0, 0, 1]])
-    return np.matmul(T, np.array(points))
-
-def draw_angle(angle, offset=0, origin=[0, 0], r=0.5, n_points=100):
-        x_start = r*cos(angle)
-        x_end = r
-        dx = (x_end - x_start)/(n_points-1)
-        coords = [[0 for _ in range(n_points)] for _ in range(3)]
-        x = x_start
-        for i in range(n_points-1):
-            y = sqrt(r**2 - x**2)
-            coords[0][i] = x
-            coords[1][i] = y
-            coords[2][i] = 1
-            x += dx
-        coords[0][-1] = r
-        coords[2][-1] = 1
-        coords = transform_points(coords, offset, origin)
-        plt.plot(coords[0], coords[1], 'k-')
-
 class insertObject:
     def __init__(self, xpos, ypos):
         self.x0 = xpos
@@ -172,7 +130,7 @@ def update(i):
         return
     #start with cleared figure!
     plt.cla()
-    ax.set_xlim(0,3)
+    ax.set_xlim(-.5,3)
     ax.set_ylim(0,3)
     label = 'timestep {0}, {1} ms'.format(i,(i*dt))
     

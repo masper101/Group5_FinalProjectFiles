@@ -240,18 +240,6 @@ def update(i):
     return arm.plot(), obj.plotObj(), plat.plotObj(), goal_obj.plotGoal(), goal_plat.plotGoal()
 
 
-# def objectCoord():
-#     """ Get object coordinates """
-#     objX = input('Input Object X Position: ')
-#     objY = input('Input Object Y Position: ')
-#     return float(objX), float(objY)
-
-# def goalCoord():
-#     """ Get object coordinates """
-#     goalX = input('Input Goal X Position: ')
-#     goalY = input('Input Goal Y Position: ')
-#     return float(goalX), float(goalY)
-
 def conditional(link3, objPosition, phi):
     """ This function determines if phi can be solved for with given object position.
     Returns TRUE if so. """
