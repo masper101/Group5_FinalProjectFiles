@@ -147,13 +147,13 @@ def update(i):
     plt.cla()
     ax.set_xlim(-0.25, 3)
     ax.set_ylim(0,3)
-    label = 'timestep {0}, {1} ms, Configuration {2}'.format(i, (i*dt), (n+m))
+    label = 'timestep {0}, {1} ms'.format(i, (i*dt))
 
     #insert object here and can now update the objects final position
     plat = drawPlatforms(objPos[0],objPos[1])
-    obj = insertObject(xpos=objPos[0],ypos=objPos[1])
-    goal_obj = insertObject(xpos=goal[0],ypos=goal[1])
-    goal_plat = drawPlatforms(goal[0],goal[1])
+    obj = insertObject(xpos=objPos[0], ypos=objPos[1])
+    goal_obj = insertObject(xpos=goal[0], ypos=goal[1])
+    goal_plat = drawPlatforms(goal[0], goal[1])
 
     # Rounding position on finger and object to two places after the decimal
     FingerXTol = round(arm.finger[0], 2)
@@ -176,7 +176,7 @@ def update(i):
     elif FingerXTol == objXTol and FingerYTol == objYTol and made2Object == 0:
         made2Object += 1
         dtheta = np.subtract(Angles2Goal[m], arm.joint_angles)
-        print('made it to object!')
+        # print('made it to object!')
 
     # already "grabbed object"
     elif made2Object > 0:
@@ -189,9 +189,9 @@ def update(i):
     # find direction of joint rotations
     dir = []
     for a in dtheta:
-        if a > 0: dir.append(1)
+        if 0 < a <= np.pi: dir.append(1)
         elif a == 0: dir.append(0)
-        elif a < 0: dir.append(-1)
+        elif a < 0 or a > np.pi: dir.append(-1)
 
     new_theta = []
 
@@ -209,10 +209,10 @@ def update(i):
     i += 1
     arm.update_joints(new_theta)
     ax.set_xlabel(label)
-    print('Made2Object: ' + str(made2Object))
+    # print('Made2Object: ' + str(made2Object))
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
-        print('Trying to move object')
+        # print('Trying to move object')
     return arm.plot(), obj.plotObj(), plat.plotObj(), goal_obj.plotGoal(), goal_plat.plotGoal()
 
 
@@ -248,10 +248,11 @@ made2Object = 0
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
 w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
 phi = 0; phi0 = 0
+dphi = 0.001
 
 # Determine if object can be reached with the arm's specified geometry
 while not conditional(arm.link_lengths[2], objPos, phi):
-    phi += 0.001
+    phi += dphi
     if phi >= np.pi*2:
         print('ERROR. Object can not be reached. \nPlease enter another location:\n')
         (objPos) = objectCoord()
@@ -274,7 +275,7 @@ arm.inverse_kinematics(objPos[0], objPos[1], phi)
 parameters = {'sigma': 1, 'method': 1}  # dictionary to specify how to solve inverse kinematics (IK)
 solutions = []  # save solution parameters [sigma, method, phi]
 while cnt < 4:
-    phi += 0.001
+    phi += dphi
     if conditional(arm.link_lengths[2], objPos, phi): arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
@@ -289,7 +290,7 @@ while cnt < 4:
         print('SOLVED!')
         Angles2Object.append(arm.joint_angles.copy())
         solutions.append([parameters['sigma'], parameters['method'], arm.phi*360/2/np.pi])
-        phi += 0.001
+        phi += dphi
         arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
 
 
@@ -302,7 +303,7 @@ dt = 100
 # Determine if goal can be reached with the arm's specified geometry
 phi = 0; phi0 = 0
 while not conditional(arm.link_lengths[2], goal, phi):
-    phi += 0.001
+    phi += dphi
     if phi >= np.pi*2:
         print('ERROR. Goal can not be reached. \nPlease enter another location:\n')
         (goal) = goalCoord()
@@ -318,7 +319,7 @@ goal_solutions = []  # save solution parameters [sigma, method, phi]
 
 arm.inverse_kinematics(goal[0], goal[1], phi)
 while cnt < 4:
-    phi += 0.001
+    phi += dphi
     if conditional(arm.link_lengths[2], goal, phi): arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
@@ -333,7 +334,7 @@ while cnt < 4:
         print('SOLVED!')
         Angles2Goal.append(arm.joint_angles.copy())
         goal_solutions.append([goal_parameters['sigma'], goal_parameters['method'], arm.phi*360/2/np.pi])
-        phi += 0.001
+        phi += dphi
         arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
 
 
@@ -341,7 +342,7 @@ while cnt < 4:
 best = [] # best config based on min time [[sigma (to obj), method (to obj), phi (to obj)]
           # [sigma (to goal), method (to goal), phi (to goal)], time to solve]
 
-steps = []; steps2 = []; totalsteps = []
+steps = []; steps2 = []; totalsteps = []; cnt = 1
 for n in range(len(Angles2Object)):
     steps.append(np.divide((np.subtract(Angles2Object[n], initial_angles)),w*dt*10**-3))
     for m in range(len(Angles2Goal)):
@@ -355,10 +356,12 @@ for n in range(len(Angles2Object)):
             best[0] = [solutions[n][0], solutions[n][1], solutions[n][2]]
             best[1] = [goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]]
             best[-1] = totalsteps[-1]
+        print('Running Configuration %d of %d...' % (cnt, len(Angles2Object)*len(Angles2Goal)))
         anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps[-1])), interval=dt)
 
         # save a gif of the animation for each solution
-        anim.save('optimization2 {}.gif'.format(len(totalsteps)), dpi=80, writer='imagemagick')
+        anim.save('optimization {}.gif'.format(len(totalsteps)), dpi=80, writer='imagemagick')
+        cnt += 1
 
 # Print results
 print('\n=============\nResults:\n')
