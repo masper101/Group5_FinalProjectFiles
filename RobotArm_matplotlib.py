@@ -228,13 +228,16 @@ def goalCoord():
     goalY = input('Input Goal Y Position: ')
     return float(goalX), float(goalY)
 
-def conditional(link3, objPosition, phi):
+def conditional(links, objPosition, phi):
     """ This function determines if phi can be solved for with given object position.
     Returns TRUE if so. """
+    link1, link2, link3 = links
     xpos, ypos = objPosition
-    constraint = xpos * cos(phi) + ypos * sin(phi)
-    requirement = (2 - (link3**2 + xpos**2 + ypos**2))/(-2*link3)
-    if constraint >= requirement: return True
+    # constraint = xpos * cos(phi) + ypos * sin(phi)
+    # requirement = (2 - (link3**2 + xpos**2 + ypos**2))/(-2*link3)
+    constraint = sqrt((xpos - link3 * cos(phi))**2 + (ypos - link3 * sin(phi))**2)
+    requirement = abs(((xpos - link3 * cos(phi))**2 + (ypos - link3 * sin(phi))**2 + link1**2 - link2**2)/(2*link1))
+    if constraint > requirement: return True
     elif constraint < requirement: return False
 
 
@@ -251,7 +254,7 @@ phi = 0; phi0 = 0
 dphi = 0.001
 
 # Determine if object can be reached with the arm's specified geometry
-while not conditional(arm.link_lengths[2], objPos, phi):
+while not conditional(arm.link_lengths, objPos, phi):
     phi += dphi
     if phi >= np.pi*2:
         print('ERROR. Object can not be reached. \nPlease enter another location:\n')
@@ -276,7 +279,7 @@ parameters = {'sigma': 1, 'method': 1}  # dictionary to specify how to solve inv
 solutions = []  # save solution parameters [sigma, method, phi]
 while cnt < 4:
     phi += dphi
-    if conditional(arm.link_lengths[2], objPos, phi): arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
+    if conditional(arm.link_lengths, objPos, phi): arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
         break
@@ -302,7 +305,7 @@ dt = 100
 '''Goal maneuver calculation below'''
 # Determine if goal can be reached with the arm's specified geometry
 phi = 0; phi0 = 0
-while not conditional(arm.link_lengths[2], goal, phi):
+while not conditional(arm.link_lengths, goal, phi):
     phi += dphi
     if phi >= np.pi*2:
         print('\nERROR. Goal can not be reached. \nPlease enter another location:\n')
@@ -320,7 +323,7 @@ goal_solutions = []  # save solution parameters [sigma, method, phi]
 arm.inverse_kinematics(goal[0], goal[1], phi)
 while cnt < 4:
     phi += dphi
-    if conditional(arm.link_lengths[2], goal, phi): arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
+    if conditional(arm.link_lengths, goal, phi): arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
         break
