@@ -235,7 +235,7 @@ def conditional(links, objPosition, phi):
     xpos, ypos = objPosition
     constraint = sqrt((xpos - link3 * cos(phi))**2 + (ypos - link3 * sin(phi))**2)
     requirement = abs(((xpos - link3 * cos(phi))**2 + (ypos - link3 * sin(phi))**2 + link1**2 - link2**2)/(2*link1))
-    if constraint > requirement: return True
+    if constraint >= requirement: return True
     elif constraint < requirement: return False
 
 
