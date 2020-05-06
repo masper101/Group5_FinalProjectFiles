@@ -1,1 +1,20 @@
+Two versions of a time optimized 3-jointed robot arm simulation in 2D are available in this repository:
+basic_arm.py and RobotArm_matplotlib.py
 
+Both files:
+-use inverse kinematics to solve for the robot joint angles to reach the object and then the final goal/target
+-use matplotlib to plot the trajectory of a 3 jointed robot arm from the starting point (initial_angles)
+ to the object location and finally to the goal location.
+-prompt the user to input the starting and end location for the object in the command line
+-keep track of the time the robot arm takes to move (timestamps in final gif)
+-saves the trajectory to a gif in the folder with the script
+
+basic_arm.py (version 1)
+    This file provides the first solution from inverse kinematics and saves this to a gif named "basic_arm"
+    
+RobotArm_matplotlib (version 2)
+    -This file provides all the possible solutions from inverse kinematics and saves each solution as a separate gif.
+    -The command line updates with the configuration number the script is currently saving a gif to, because some locations
+     have many solutions and the script can take a long time to write all the solutions to gifs.
+    -After saving all the gifs, the script prints to the console, which configuration number takes the shortest amount of time
+     along with the phi and signma values used to reach the object and the goal/target
