@@ -189,9 +189,9 @@ def update(i):
     # find direction of joint rotations
     dir = []
     for a in dtheta:
-        if 0 < a <= np.pi: dir.append(1)
+        if a > 0: dir.append(1)
         elif a == 0: dir.append(0)
-        elif a < 0 or a > np.pi: dir.append(-1)
+        elif a < 0: dir.append(-1)
 
     new_theta = []
 
@@ -305,7 +305,7 @@ phi = 0; phi0 = 0
 while not conditional(arm.link_lengths[2], goal, phi):
     phi += dphi
     if phi >= np.pi*2:
-        print('ERROR. Goal can not be reached. \nPlease enter another location:\n')
+        print('\nERROR. Goal can not be reached. \nPlease enter another location:\n')
         (goal) = goalCoord()
         phi = 0
     phi0 = phi
@@ -347,7 +347,7 @@ for n in range(len(Angles2Object)):
     steps.append(np.divide((np.subtract(Angles2Object[n], initial_angles)),w*dt*10**-3))
     for m in range(len(Angles2Goal)):
         steps2.append(np.divide((np.subtract(Angles2Goal[m], Angles2Object[n])), w*dt*10**-3))
-        totalsteps.append(max(abs(steps[n])) + max(abs(steps2[m])))
+        totalsteps.append(max(abs(steps[-1])) + max(abs(steps2[-1])))
         if not best:
             best.append([solutions[n][0],solutions[n][1],solutions[n][2]])
             best.append([goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]])
@@ -366,6 +366,6 @@ for n in range(len(Angles2Object)):
 # Print results
 print('\n=============\nResults:\n')
 print('The Fastest Solution Time: %.2f s' % min(np.array(totalsteps)/10))
-print('Configuration: %d' % totalsteps.index(min(totalsteps)))
+print('Configuration: %d' % (totalsteps.index(min(totalsteps))+1))
 print('To Object Solution Parameters: \nphi = %.2f degrees\nsigma = %d' % (best[0][2], best[0][0]))
 print('To Goal Solution Parameters: \nphi = %.2f degrees\nsigma = %d' % (best[1][2], best[1][0]))
