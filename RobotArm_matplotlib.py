@@ -1,7 +1,7 @@
 """
 Created on Thu Apr 23 12:43:29 2020
 
-@author: Emily Brady
+@author: Matt Asper, Emily Brady, and Connor Gunsbury
 """
 from numpy import cos, sin, sqrt
 import numpy as np
