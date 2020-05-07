@@ -6,14 +6,15 @@ Created on Thu Apr 23 12:43:29 2020
 from numpy import cos, sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as pat
 from matplotlib.animation import FuncAnimation
 import math
 
 #creates three joint arm
 class ThreeLinkArm():
-    def __init__(self, joint_angles=[0, 0, 0]):
+    def __init__(self, joint_angles=[0, 0, 0], joint_lengths=[1,1,1]):
         self.shoulder = np.array([0, 0])
-        self.link_lengths = [1, 1, 1]
+        self.link_lengths = joint_lengths
         self.update_joints(joint_angles)
         self.phi = np.pi/4
 
@@ -128,27 +129,31 @@ class drawPlatforms:
 
     def plotObj(self):
         # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
-        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
-        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
-        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
-        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
+        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='b')
+        ax.add_patch(rect)
 
     def plotGoal(self):
         # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
-        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'g')
-        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'g')
-        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'g')
-        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'g')
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'g')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'g')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'g')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'g')
+        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='g')
+        ax.add_patch(rect)
 
 ''' Function to create the animation '''
 def update(i):
     if i > math.ceil(totalsteps[-1]):
         return
-    global objPos, made2Object, goal
+    global objPos, made2Object, goal, plotxmax, plotymax
     #start with cleared figure!
     plt.cla()
-    ax.set_xlim(-0.25, 3)
-    ax.set_ylim(0,3)
+    ax.set_xlim(-0.25, plotxmax)
+    ax.set_ylim(0,plotymax)
     label = 'timestep {0}, {1} ms'.format(i, (i*dt))
 
     #insert object here and can now update the objects final position
@@ -244,14 +249,18 @@ def conditional(links, objPosition, phi):
 
 
 '''create arm, object, and end goal '''
-arm = ThreeLinkArm()
+
 (objPos) = objectCoord()
 obj = insertObject(xpos=objPos[0], ypos=objPos[1])
 (goal) = goalCoord()
 made2Object = 0
-
+arm1 = eval(input("Please enter the length of the first arm segment: "))
+arm2 = eval(input("Please enter the length of the second arm segment: "))
+arm3 = eval(input("Please enter the length of the third arm segment: "))
 gif = input("Please enter a prefix for the saved GIF: ")
-
+plotxmax = arm1 + arm2 + arm3
+plotymax = plotxmax
+arm = ThreeLinkArm(joint_lengths=[arm1,arm2,arm3])
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
 w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
 phi = 0; phi0 = 0
@@ -266,7 +275,7 @@ while not conditional(arm.link_lengths, objPos, phi):
         phi = 0
     phi0 = phi
 
-tol = 1e-5  # tolerance btw arm's finger and object
+tol = 1e-3  # tolerance btw arm's finger and object
 
 # Initial orientation
 arm.update_joints(initial_angles)
@@ -363,13 +372,12 @@ for n in range(len(Angles2Object)):
             best[0] = [solutions[n][0], solutions[n][1], solutions[n][2]]
             best[1] = [goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]]
             best[-1] = totalsteps[-1]
-        print('Running Configuration %d of %d...' % (cnt, len(Angles2Object)*len(Angles2Goal)))
-        anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps[-1])+30), interval=dt)
-
-        # save a gif of the animation for each solution
-        anim.save('{}_optimization_{}.gif'.format(gif, len(totalsteps)), dpi=80, writer='imagemagick')
+        print('Running Configuration %d of %d...' % (cnt, len(Angles2Object)*len(Angles2Goal)))        
+        # save a gif of the animation for each solution       
         cnt += 1
-
+        
+anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(best[-1])+30), interval=dt)
+anim.save('{}_optimization.gif'.format(gif), dpi=80, writer='imagemagick')
 # Print results
 print('\n=============\nResults:\n')
 print('The Fastest Solution Time: %.2f s' % min(np.array(totalsteps)/10))
