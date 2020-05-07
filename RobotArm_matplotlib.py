@@ -128,10 +128,20 @@ class drawPlatforms:
         self.width = w
 
     def plotObj(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
         rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='b')
         ax.add_patch(rect)
 
     def plotGoal(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'g')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'g')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'g')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'g')
         rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='g')
         ax.add_patch(rect)
 
@@ -215,16 +225,18 @@ def update(i):
 
 def objectCoord():
     """ Get object coordinates """
+    global plotxmax
     print("Enter the object starting coordinates.")
-    objX = input('Input Object X Position (Range {}-{}): '.format(0,3))
-    objY = input('Input Object Y Position (Range {}-{}): '.format(0,3))
+    objX = input('Input Object X Position (Range {}-{}): '.format(0,plotxmax))
+    objY = input('Input Object Y Position (Range {}-{}): '.format(0,plotxmax))
     return float(objX), float(objY)
 
 def goalCoord():
     """ Get object coordinates """
+    global plotxmax
     print("Enter the object target location.")
-    goalX = input('Input Goal X Position (Range {}-{}): '.format(0,3))
-    goalY = input('Input Goal Y Position (Range {}-{}): '.format(0,3))
+    goalX = input('Input Goal X Position (Range {}-{}): '.format(0,plotxmax))
+    goalY = input('Input Goal Y Position (Range {}-{}): '.format(0,plotxmax))
     return float(goalX), float(goalY)
 
 def conditional(links, objPosition, phi):
