@@ -140,11 +140,15 @@ def update(i):
     if i > math.ceil(totalsteps[-1]):
         return
     global objPos, made2Object, goal, plotxmax, plotymax
+
     #start with cleared figure!
     plt.cla()
     ax.set_xlim(-0.25, plotxmax)
-    ax.set_ylim(0,plotymax)
-    label = 'timestep {0}, {1} ms'.format(i, (i*dt))
+    ax.set_ylim(0, plotymax)
+    if i*dt < best[2]*1000:
+        label = 'timestep {0}, {1} ms'.format(i, (i * dt))
+    else:
+        label = 'timestep {0}, {1} ms'.format(i, (round(best[2], 1) * 1000))
 
     #insert object here and can now update the objects final position
     plat = drawPlatforms(objPos[0],objPos[1])
@@ -157,13 +161,12 @@ def update(i):
     FingerYTol =round(arm.finger[1], 2)
     objXTol = round(objPos[0], 2)
     objYTol = round(objPos[1], 2)
-    # print('Finger X pos: ' + str(FingerXTol))
 
     # Update the arm to the new orientation with angle changes
     max_dtheta = np.multiply(dt*10**-3, w)  # maximum angle joint can move within a timestep
 
     if i == 0:
-        dtheta = np.subtract(Angles2Object[n], initial_angles)
+        dtheta = np.subtract(obj_angles, initial_angles)
         #insert object here and can now update the objects final position
         obj = insertObject(xpos=objPos[0],ypos=objPos[1])
         goal_obj = insertObject(xpos=goal[0], ypos=goal[1])
@@ -172,16 +175,15 @@ def update(i):
     # made it to the object to pick it up!
     elif FingerXTol == objXTol and FingerYTol == objYTol and made2Object == 0:
         made2Object += 1
-        dtheta = np.subtract(Angles2Goal[m], arm.joint_angles)
-        # print('made it to object!')
+        dtheta = np.subtract(goal_angles, arm.joint_angles)
 
     # already "grabbed object"
     elif made2Object > 0:
-        dtheta = np.subtract(Angles2Goal[m], arm.joint_angles)
+        dtheta = np.subtract(goal_angles, arm.joint_angles)
 
     # enroute to grab object after 1st frame
     else:
-        dtheta = np.subtract(Angles2Object[n], arm.joint_angles)
+        dtheta = np.subtract(obj_angles, arm.joint_angles)
 
     # find direction of joint rotations
     dir = []
@@ -206,10 +208,8 @@ def update(i):
     i += 1
     arm.update_joints(new_theta)
     ax.set_xlabel(label)
-    # print('Made2Object: ' + str(made2Object))
     if made2Object > 0 :
         obj.moveObj(arm.finger[0], arm.finger[1])
-        # print('Trying to move object')
     return arm.plot(), obj.plotObj(), plat.plotObj(), goal_obj.plotGoal(), goal_plat.plotGoal()
 
 
@@ -365,7 +365,14 @@ for n in range(len(Angles2Object)):
         print('Running Configuration %d of %d...' % (cnt, len(Angles2Object)*len(Angles2Goal)))        
         # save a gif of the animation for each solution       
         cnt += 1
-        
+
+# get to-obj angles and to-goal angles of the BEST configuration only
+arm.inverse_kinematics(objPos[0], objPos[1], best[0][2]*np.pi*2/360, **{'sigma': best[0][0], 'method': best[0][1]})
+obj_angles = arm.joint_angles
+
+arm.inverse_kinematics(goal[0], goal[1], best[1][2]*np.pi*2/360, **{'sigma': best[1][0], 'method': best[1][1]})
+goal_angles = arm.joint_angles
+
 anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(best[-1])+30), interval=dt)
 anim.save('{}_optimization.gif'.format(gif), dpi=80, writer='imagemagick')
 # Print results
