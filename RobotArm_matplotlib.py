@@ -77,6 +77,31 @@ class ThreeLinkArm():
         plt.plot(self.wrist[0], self.wrist[1], 'ko')
         plt.plot(self.finger[0], self.finger[1], 'ko')
 
+
+'''functions to help draw the angles did not modify these in any way'''
+def transform_points(points, theta, origin):
+    T = np.array([[cos(theta), -sin(theta), origin[0]],
+                  [sin(theta), cos(theta), origin[1]],
+                  [0, 0, 1]])
+    return np.matmul(T, np.array(points))
+
+def draw_angle(angle, offset=0, origin=[0, 0], r=0.5, n_points=100):
+        x_start = r*cos(angle)
+        x_end = r
+        dx = (x_end - x_start)/(n_points-1)
+        coords = [[0 for _ in range(n_points)] for _ in range(3)]
+        x = x_start
+        for i in range(n_points-1):
+            y = sqrt(r**2 - x**2)
+            coords[0][i] = x
+            coords[1][i] = y
+            coords[2][i] = 1
+            x += dx
+        coords[0][-1] = r
+        coords[2][-1] = 1
+        coords = transform_points(coords, offset, origin)
+        plt.plot(coords[0], coords[1], 'k-')
+
 class insertObject:
     def __init__(self, xpos, ypos):
         self.x0 = xpos
@@ -103,10 +128,20 @@ class drawPlatforms:
         self.width = w
 
     def plotObj(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
         rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='b')
         ax.add_patch(rect)
 
     def plotGoal(self):
+        # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
+        # plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'g')
+        # plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'g')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'g')
+        # plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'g')
         rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='g')
         ax.add_patch(rect)
 
@@ -190,16 +225,18 @@ def update(i):
 
 def objectCoord():
     """ Get object coordinates """
+    global plotxmax
     print("Enter the object starting coordinates.")
-    objX = input('Input Object X Position (Range {}-{}): '.format(0,3))
-    objY = input('Input Object Y Position (Range {}-{}): '.format(0,3))
+    objX = input('Input Object X Position (Range {}-{}): '.format(0,plotxmax))
+    objY = input('Input Object Y Position (Range {}-{}): '.format(0,plotxmax))
     return float(objX), float(objY)
 
 def goalCoord():
     """ Get object coordinates """
+    global plotxmax
     print("Enter the object target location.")
-    goalX = input('Input Goal X Position (Range {}-{}): '.format(0,3))
-    goalY = input('Input Goal Y Position (Range {}-{}): '.format(0,3))
+    goalX = input('Input Goal X Position (Range {}-{}): '.format(0,plotxmax))
+    goalY = input('Input Goal Y Position (Range {}-{}): '.format(0,plotxmax))
     return float(goalX), float(goalY)
 
 def conditional(links, objPosition, phi):
