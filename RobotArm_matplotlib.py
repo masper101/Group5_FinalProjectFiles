@@ -251,17 +251,16 @@ def conditional(links, objPosition, phi):
 
 
 '''create arm, object, and end goal '''
-
-(objPos) = objectCoord()
-obj = insertObject(xpos=objPos[0], ypos=objPos[1])
-(goal) = goalCoord()
-made2Object = 0
 arm1 = eval(input("Please enter the length of the first arm segment: "))
 arm2 = eval(input("Please enter the length of the second arm segment: "))
 arm3 = eval(input("Please enter the length of the third arm segment: "))
 gif = input("Please enter a prefix for the saved GIF: ")
 plotxmax = arm1 + arm2 + arm3
 plotymax = plotxmax
+(objPos) = objectCoord()
+obj = insertObject(xpos=objPos[0], ypos=objPos[1])
+(goal) = goalCoord()
+made2Object = 0
 arm = ThreeLinkArm(joint_lengths=[arm1,arm2,arm3])
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
 w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
