@@ -10,7 +10,8 @@ Both files:
 -saves the trajectory to a gif in the folder with the script
 
 basic_arm.py (version 1)
-    This file provides the first solution from inverse kinematics and saves this to a gif named "basic_arm"
+    This file provides the first solution from inverse kinematics and saves this to a gif with a name specified by the user. The range
+    is 0-3 for x and y.
     
 RobotArm_matplotlib (version 2)
     -This file provides all the possible solutions from inverse kinematics and saves the fastest solution as a gif.
