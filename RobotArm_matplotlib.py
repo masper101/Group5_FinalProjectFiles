@@ -1,41 +1,13 @@
 """
-@author: Emily Brady, Matt Asper, Connor Gunsbury
+Created on Thu Apr 23 12:43:29 2020
+
+@author: Matt Asper, Emily Brady, and Connor Gunsbury
 """
 from numpy import cos, sin, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as pat
 from matplotlib.animation import FuncAnimation
 import math
-
-print("Enter the object starting and target locations below. Range 0-3")
-while True:
-    objx = eval(input("Starting x position: "))
-    if objx >= 0 and objx <= 3:
-        break
-    else:
-        print("Position out of range. Please enter a value between 0 and 3.")
-while True:
-    objy = eval(input("Starting y position: "))
-    if objy >= 0 and objy <= 3:
-        break
-    else:
-        print("Position out of range. Please enter a value between 0 and 3.")
-while True:
-    targx = eval(input("Target x position: "))
-    if targx >= 0 and targx <= 3:
-        break
-    else:
-        print("Position out of range. Please enter a value between 0 and 3.")
-while True:
-    targy = eval(input("Target y position: "))
-    if targy >= 0 and targy <= 3:
-        break
-    else:
-        print("Position out of range. Please enter a value between 0 and 3.")
-gif = input("Please enter a prefix for the saved GIF: ")
-
-dphi = 0.001
 
 #creates three joint arm
 class ThreeLinkArm():
@@ -156,13 +128,17 @@ class drawPlatforms:
 
     def plotObj(self):
         # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
-        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='b')
-        ax.add_patch(rect)
+        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'b')
+        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'b')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'b')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'b')
 
     def plotGoal(self):
         # pat.Rectangle((self.xbottom-self.width/2,self.ybottom),self.width,self.ytop)
-        rect = pat.Rectangle((self.x - self.width/2,0),self.width,self.ytop,facecolor='g')
-        ax.add_patch(rect)
+        plt.plot([self.x - self.width/2, self.x - self.width/2],[self.ytop, self.ybottom], 'g')
+        plt.plot([self.x + self.width/2, self.x + self.width/2],[self.ytop, self.ybottom], 'g')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ytop, self.ytop], 'g')
+        plt.plot([self.x + self.width/2, self.x - self.width/2],[self.ybottom, self.ybottom], 'g')
 
 ''' Function to create the animation '''
 def update(i):
@@ -173,13 +149,13 @@ def update(i):
     plt.cla()
     ax.set_xlim(-0.25, 3)
     ax.set_ylim(0,3)
-    label = 'timestep {0}, {1} ms, Configuration {2}'.format(i, (i*dt), (n+m))
+    label = 'timestep {0}, {1} ms'.format(i, (i*dt))
 
     #insert object here and can now update the objects final position
     plat = drawPlatforms(objPos[0],objPos[1])
-    obj = insertObject(xpos=objPos[0],ypos=objPos[1])
-    goal_obj = insertObject(xpos=goal[0],ypos=goal[1])
-    goal_plat = drawPlatforms(goal[0],goal[1])
+    obj = insertObject(xpos=objPos[0], ypos=objPos[1])
+    goal_obj = insertObject(xpos=goal[0], ypos=goal[1])
+    goal_plat = drawPlatforms(goal[0], goal[1])
 
     # Rounding position on finger and object to two places after the decimal
     FingerXTol = round(arm.finger[0], 2)
@@ -242,37 +218,55 @@ def update(i):
     return arm.plot(), obj.plotObj(), plat.plotObj(), goal_obj.plotGoal(), goal_plat.plotGoal()
 
 
-def conditional(link3, objPosition, phi):
+def objectCoord():
+    """ Get object coordinates """
+    print("Enter the object starting coordinates.")
+    objX = input('Input Object X Position (Range {}-{}): '.format(0,3))
+    objY = input('Input Object Y Position (Range {}-{}): '.format(0,3))
+    return float(objX), float(objY)
+
+def goalCoord():
+    """ Get object coordinates """
+    print("Enter the object target location.")
+    goalX = input('Input Goal X Position (Range {}-{}): '.format(0,3))
+    goalY = input('Input Goal Y Position (Range {}-{}): '.format(0,3))
+    return float(goalX), float(goalY)
+
+def conditional(links, objPosition, phi):
     """ This function determines if phi can be solved for with given object position.
     Returns TRUE if so. """
+    link1, link2, link3 = links
     xpos, ypos = objPosition
-    constraint = xpos * cos(phi) + ypos * sin(phi)
-    requirement = (2 - (link3**2 + xpos**2 + ypos**2))/(-2*link3)
+    constraint = sqrt((xpos - link3 * cos(phi))**2 + (ypos - link3 * sin(phi))**2)
+    requirement = abs(((xpos - link3 * cos(phi))**2 + (ypos - link3 * sin(phi))**2 + link1**2 - link2**2)/(2*link1))
     if constraint >= requirement: return True
     elif constraint < requirement: return False
 
 
 '''create arm, object, and end goal '''
 arm = ThreeLinkArm()
-(objPos) = (objx,objy)
+(objPos) = objectCoord()
 obj = insertObject(xpos=objPos[0], ypos=objPos[1])
-(goal) = (targx,targy)
+(goal) = goalCoord()
 made2Object = 0
+
+gif = input("Please enter a prefix for the saved GIF: ")
 
 initial_angles = [0.5, 1, 1]  # initial joint positions [rad]
 w = np.array([0.5, 1, 1.5])  # angular velocity of joints [rad/s]
 phi = 0; phi0 = 0
+dphi = 0.001
 
 # Determine if object can be reached with the arm's specified geometry
-while not conditional(arm.link_lengths[2], objPos, phi):
+while not conditional(arm.link_lengths, objPos, phi):
     phi += dphi
     if phi >= np.pi*2:
         print('ERROR. Object can not be reached. \nPlease enter another location:\n')
-        (objPos) = (objx,objy)
+        (objPos) = objectCoord()
         phi = 0
     phi0 = phi
 
-tol = 1e-3  # tolerance btw arm's finger and object
+tol = 1e-5  # tolerance btw arm's finger and object
 
 # Initial orientation
 arm.update_joints(initial_angles)
@@ -289,7 +283,7 @@ parameters = {'sigma': 1, 'method': 1}  # dictionary to specify how to solve inv
 solutions = []  # save solution parameters [sigma, method, phi]
 while cnt < 4:
     phi += dphi
-    if conditional(arm.link_lengths[2], objPos, phi): arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
+    if conditional(arm.link_lengths, objPos, phi): arm.inverse_kinematics(objPos[0], objPos[1], phi, **parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
         break
@@ -315,11 +309,11 @@ dt = 100
 '''Goal maneuver calculation below'''
 # Determine if goal can be reached with the arm's specified geometry
 phi = 0; phi0 = 0
-while not conditional(arm.link_lengths[2], goal, phi):
+while not conditional(arm.link_lengths, goal, phi):
     phi += dphi
     if phi >= np.pi*2:
-        print('ERROR. Goal can not be reached. \nPlease enter another location:\n')
-        (goal) = (targx,targy)
+        print('\nERROR. Goal can not be reached. \nPlease enter another location:\n')
+        (goal) = goalCoord()
         phi = 0
     phi0 = phi
 
@@ -333,7 +327,7 @@ goal_solutions = []  # save solution parameters [sigma, method, phi]
 arm.inverse_kinematics(goal[0], goal[1], phi)
 while cnt < 4:
     phi += dphi
-    if conditional(arm.link_lengths[2], goal, phi): arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
+    if conditional(arm.link_lengths, goal, phi): arm.inverse_kinematics(goal[0], goal[1], phi, **goal_parameters)
     if phi >= np.pi * 2 and cnt > 3:
         print('Error. Solution can not be reached within the specified tolerance. Failed: %d' % cnt)
         break
@@ -355,12 +349,12 @@ while cnt < 4:
 best = [] # best config based on min time [[sigma (to obj), method (to obj), phi (to obj)]
           # [sigma (to goal), method (to goal), phi (to goal)], time to solve]
 
-steps = []; steps2 = []; totalsteps = []
+steps = []; steps2 = []; totalsteps = []; cnt = 1
 for n in range(len(Angles2Object)):
     steps.append(np.divide((np.subtract(Angles2Object[n], initial_angles)),w*dt*10**-3))
     for m in range(len(Angles2Goal)):
         steps2.append(np.divide((np.subtract(Angles2Goal[m], Angles2Object[n])), w*dt*10**-3))
-        totalsteps.append(max(abs(steps[n])) + max(abs(steps2[m])))
+        totalsteps.append(max(abs(steps[-1])) + max(abs(steps2[-1])))
         if not best:
             best.append([solutions[n][0],solutions[n][1],solutions[n][2]])
             best.append([goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]])
@@ -369,14 +363,16 @@ for n in range(len(Angles2Object)):
             best[0] = [solutions[n][0], solutions[n][1], solutions[n][2]]
             best[1] = [goal_solutions[m][0], goal_solutions[m][1], goal_solutions[m][2]]
             best[-1] = totalsteps[-1]
+        print('Running Configuration %d of %d...' % (cnt, len(Angles2Object)*len(Angles2Goal)))
         anim = FuncAnimation(fig, update, frames=np.arange(0, math.ceil(totalsteps[-1])+30), interval=dt)
 
         # save a gif of the animation for each solution
-        anim.save('{}_optimization2 {}.gif'.format(gif,len(totalsteps)), dpi=80, writer='imagemagick')
+        anim.save('{}_optimization_{}.gif'.format(gif, len(totalsteps)), dpi=80, writer='imagemagick')
+        cnt += 1
 
 # Print results
 print('\n=============\nResults:\n')
 print('The Fastest Solution Time: %.2f s' % min(np.array(totalsteps)/10))
-print('Configuration: %d' % totalsteps.index(min(totalsteps)))
+print('Configuration: %d' % (totalsteps.index(min(totalsteps))+1))
 print('To Object Solution Parameters: \nphi = %.2f degrees\nsigma = %d' % (best[0][2], best[0][0]))
 print('To Goal Solution Parameters: \nphi = %.2f degrees\nsigma = %d' % (best[1][2], best[1][0]))
