@@ -17,7 +17,7 @@ RobotArm_matplotlib (version 2)
     -This file provides all the possible solutions from inverse kinematics and saves the fastest solution as a gif.
     -The command line updates with the configuration number the script is currently saving a gif to, because some locations
      have many solutions and the script can take a long time to write all the solutions to gifs.
-    -After saving all the gifs, the script prints to the console, which configuration number takes the shortest amount of time
+    -After saving the fastest gif, the script prints to the console, which configuration number takes the shortest amount of time
      along with the phi and signma values used to reach the object and the goal/target
 
 Note- there are still some positions which do not resolve. We also realize that this may not find the absolute optimum fastest path,
