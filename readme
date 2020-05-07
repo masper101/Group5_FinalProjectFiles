@@ -13,7 +13,7 @@ basic_arm.py (version 1)
     This file provides the first solution from inverse kinematics and saves this to a gif named "basic_arm"
     
 RobotArm_matplotlib (version 2)
-    -This file provides all the possible solutions from inverse kinematics and saves each solution as a separate gif.
+    -This file provides all the possible solutions from inverse kinematics and saves the fastest solution as a gif.
     -The command line updates with the configuration number the script is currently saving a gif to, because some locations
      have many solutions and the script can take a long time to write all the solutions to gifs.
     -After saving all the gifs, the script prints to the console, which configuration number takes the shortest amount of time
